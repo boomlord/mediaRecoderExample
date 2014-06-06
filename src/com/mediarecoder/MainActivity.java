@@ -13,16 +13,16 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.View.OnTouchListener;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback{
+public class MainActivity extends Activity implements SurfaceHolder.Callback, OnTouchListener{
 
 	private static final String TAG = "MediaRecorderExample";
 
@@ -35,6 +35,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		Button btnRec = (Button)findViewById(R.id.btnRec);
+		btnRec.setOnTouchListener(this);
 	}
 
 	@Override
@@ -65,6 +67,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 		return true;
 	}
 */
+	/*
+	 *
+	/////////////////////////////////////////////////////////////////////////
 	public void onRecordClick(View v) {
 		boolean on = ((ToggleButton) v).isChecked();
 
@@ -83,9 +88,14 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 			stopRecord();
 		}
 	}
-
+	**************************************************************************/
+	
 	private int nFrameCount = 0;
 
+	
+	/////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////START RECORD////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////
 	private void startRecord() throws IllegalStateException, IOException {
 		mCamera.unlock();
 
@@ -94,6 +104,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
         mMediaRecorder.setPreviewDisplay(mSurface.getHolder().getSurface());
 		mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
 		mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+		//Error native method
+		//mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
 
 		if (CamcorderProfile.hasProfile(CamcorderProfile.QUALITY_1080P)) {
 			mMediaRecorder.setProfile(CamcorderProfile.get(CamcorderProfile.QUALITY_1080P));
@@ -104,7 +116,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 		mMediaRecorder.setMaxDuration(15000);
 		mMediaRecorder.setVideoSize(480, 480);
 		
-		//mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
+		
+		
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd'T'HHmmss");
     	String timeStamp = dateFormat.format(new Date());
     	
@@ -113,17 +126,25 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 		mMediaRecorder.prepare();
 		mMediaRecorder.start();
 		
-		final TextView frameCountView = (TextView) findViewById(R.id.textViewFrameCount); 
+		//final TextView frameCountView = (TextView) findViewById(R.id.textViewFrameCount); 
 		mCamera.setPreviewCallback(new PreviewCallback() {
 
 			public void onPreviewFrame(byte[] data, Camera camera) {
 				Log.d(TAG, "Receive data size: " + data.length);
-				frameCountView.setText(String.valueOf(++nFrameCount));
+				//frameCountView.setText(String.valueOf(++nFrameCount));
 			}
 
 		});
+		
 	}
+	/////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////
 
+	
+	/////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////STOP RECORD////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////
 	private void stopRecord() {
 		if (mMediaRecorder != null) {		
 			mMediaRecorder.stop();
@@ -135,7 +156,9 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 			mCamera.lock();			
 		}
 	}
-
+	/////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////
 	
 	
 	@Override
@@ -163,4 +186,39 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback{
 		// TODO Auto-generated method stub
 		
 	}
+	
+	/////////////////////////////////////////////////////////////////////////////////
+	/////////////EVENT LISTENER WHEN HOLD AND RELEASE BUTTON RECORD//////////////////
+	/////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public boolean onTouch(View v, MotionEvent e) {
+		// TODO Auto-generated method stub
+		
+		switch(e.getAction()) {
+        case MotionEvent.ACTION_DOWN:
+            // Do something
+        	try {
+				startRecord();
+			} catch (IllegalStateException e1) {
+				e1.printStackTrace();
+				Toast.makeText(this, "Fail to start recording/illegal state", Toast.LENGTH_SHORT).show();
+			} catch (IOException e2) {
+				e2.printStackTrace();
+				Toast.makeText(this, "Fail to start recording/io exception", Toast.LENGTH_SHORT).show();
+			}
+            return true;
+        case MotionEvent.ACTION_UP:
+            // No longer down
+        	stopRecord();
+			Toast.makeText(getApplication(), "Release, now start to save video",  Toast.LENGTH_LONG).show();
+			// Convert to video
+			
+            return true;
+        }
+		
+		return false;
+	}
+	/////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////
 }
